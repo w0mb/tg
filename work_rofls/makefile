@@ -1,3 +1,4 @@
+RAY_FLAG := -lraylib -lopengl32 -lgdi32 -lwinmm 
 CC := gcc
 CFLAGS := -Wall -Wextra
 
