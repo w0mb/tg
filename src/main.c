@@ -157,12 +157,7 @@ void shoot(struct Gun* gun, struct Target* target)
     }
 }
 
-void menuLogic()
-{
-
-}
-
-int menu(int screenWidth, int screenHeight, struct Choice* choice)
+int drawMenu(int screenWidth, int screenHeight, struct Choice* choice)
 {
     DrawText("play", screenWidth / 2, screenHeight / 2, 100, WHITE);
     DrawText("settings", screenWidth / 2, screenHeight / 2 + 100, 100, WHITE);
@@ -219,12 +214,9 @@ int menu(int screenWidth, int screenHeight, struct Choice* choice)
 }
 
 
-void game()
+void runGameLoop(int screenHeight, int screenWidth)
 {
-    int screenWidth = 1000;
-    int screenHeight = 1000;
 
-    struct Choice choice;
 
     struct Character character = {100, 100, 32, 5, {character.x, character.y, 45, 45}, false};
     struct Target target = {200, 200, 90, 100, false, 0, {target.x, target.y, 90, 90}, true};
@@ -235,13 +227,45 @@ void game()
     PlayMusicStream(backgroundMusic);
     UpdateMusicStream(backgroundMusic);
 
+    loadTextures();
+
+    bool playGame = true; // Установить флаг в true, чтобы запустить игру
+
+    while (playGame && !WindowShouldClose())
+    {
+        BeginDrawing();
+
+        ClearBackground(BLACK); // Очистка экрана
+
+        // Основной алгоритм игры
+        draw_char(&character);
+        draw_gun(&character, &target, &gun);
+        draw_target(&target);
+
+        move(&character);
+        shoot(&gun, &target);
+
+        DrawFPS(10, 10);
+        DrawText(TextFormat("Ammo: %d", gun.ammo), 10, screenHeight - 30, 20, WHITE);
+
+        EndDrawing();
+    }
+
+    unloadTextures();
+    UnloadMusicStream(backgroundMusic);
+}
+
+void game()
+{
+    int screenWidth = 1000;
+    int screenHeight = 1000;
+
+    struct Choice choice;
+
     InitWindow(screenWidth, screenHeight, "Dwarf Game");
     SetTargetFPS(60);
 
-    loadTextures();
-
     int menuChoice = 0;
-    bool playGame = false; // Флаг для определения, нужно ли запускать игру
     bool showText = false; // Флаг для отображения надписи "PISKA POPKA"
 
     while (!WindowShouldClose())
@@ -250,39 +274,21 @@ void game()
 
         ClearBackground(BLACK); // Очистка экрана
 
-        if (!playGame)
+        if (!showText)
         {
-            menuChoice = menu(screenHeight, screenWidth, &choice);
+            menuChoice = drawMenu(screenHeight, screenWidth, &choice);
 
             if (menuChoice == 1)
             {
-                playGame = true; // Установить флаг в true, чтобы запустить игру
+                runGameLoop(screenHeight, screenWidth); // Запустить основной алгоритм игры
             }
             else if (menuChoice == 3)
             {
-                break;
+                break; // Выход из игры
             }
             else if (menuChoice == 4)
             {
                 showText = true; // Показать надпись "PISKA POPKA"
-            }
-        }
-        else
-        {
-            // Основной алгоритм игры
-            draw_char(&character);
-            draw_gun(&character, &target, &gun);
-            draw_target(&target);
-
-            move(&character);
-            shoot(&gun, &target);
-
-            DrawFPS(10, 10);
-            DrawText(TextFormat("Ammo: %d", gun.ammo), 10, screenHeight - 30, 20, WHITE);
-
-            if (IsKeyPressed(KEY_SPACE))
-            {
-                showText = false; // Скрыть надпись "PISKA POPKA"
             }
         }
 
@@ -290,17 +296,22 @@ void game()
         if (showText)
         {
             ClearBackground(BLACK);
-            DrawText("PISKA POPKA", screenWidth / 2 - 400, screenHeight/2, 150, WHITE);
+            DrawText("PISKA POPKA", screenWidth / 2 - 400, screenHeight/2, 120, WHITE);
+            DrawText("press 'space' to exit in main menu", 10, screenHeight - 300, 20, WHITE);
+
+            if (IsKeyPressed(KEY_SPACE))
+            {
+                showText = false; // Скрыть надпись "PISKA POPKA"
+            }
         }
 
         EndDrawing();
     }
 
-    unloadTextures();
-    UnloadMusicStream(backgroundMusic);
-
     CloseWindow();
 }
+
+
 
 
 
