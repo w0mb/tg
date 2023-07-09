@@ -1,4 +1,5 @@
 #include "../raylib/src/raylib.h"
+#define TEXTURES_COUNT 5
 
 struct Character
 {
@@ -8,6 +9,7 @@ struct Character
     int speed;
     Rectangle charHitbox;
     bool flipX;
+    bool drHitbox;
 };
 
 struct Choice
@@ -26,6 +28,7 @@ struct Target
     float respawnTimer;
     Rectangle targetHitbox;
     bool visible;
+    bool drHitbox;
 };
 
 struct Gun
@@ -35,9 +38,9 @@ struct Gun
     int ammo;
     int damage;
     Rectangle gunHitbox;
+    bool drHitbox;
 };
 
-#define TEXTURES_COUNT 5
 enum TextureIndex
 {
     TEXTURE_CHARACTER,
@@ -82,7 +85,11 @@ void draw_char(struct Character* character)
     drawTexturedRect((Rectangle){character->x, character->y, character->size, character->size},
                      textures[character->flipX ? TEXTURE_CHARACTER_MIRRORED : TEXTURE_CHARACTER], WHITE);
 
-    DrawRectangleLines(character->x, character->y, character->charHitbox.width, character->charHitbox.height, GREEN);
+    if(character->drHitbox)
+    {
+        DrawRectangleLines(character->x, character->y, character->charHitbox.width, character->charHitbox.height, GREEN);
+    }
+    
 }
 
 void draw_target(struct Target* target)
@@ -92,7 +99,11 @@ void draw_target(struct Target* target)
         drawTexturedRect((Rectangle){target->x, target->y, target->size, target->size},
                          textures[TEXTURE_TARGET], WHITE);
 
-        DrawRectangleLines(target->x, target->y, target->targetHitbox.width, target->targetHitbox.height, RED);
+        if(target->drHitbox)
+        {
+            DrawRectangleLines(target->x, target->y, target->targetHitbox.width, target->targetHitbox.height, RED);
+        }
+        
     }
 }
 
@@ -104,9 +115,11 @@ void draw_gun(struct Character* character, struct Target* target, struct Gun* gu
     drawTexturedRect((Rectangle){gun->gunX, gun->gunY, textures[TEXTURE_GUN].width, textures[TEXTURE_GUN].height},
                      textures[character->flipX ? TEXTURE_GUN_MIRRORED : TEXTURE_GUN], WHITE);
 
-    DrawRectangleLines(gun->gunX, gun->gunY, gun->gunHitbox.width, gun->gunHitbox.height, BLUE);
+    if(gun->drHitbox)
+    {
+        DrawRectangleLines(gun->gunX, gun->gunY, gun->gunHitbox.width, gun->gunHitbox.height, BLUE);
+    }
 }
-
 void move(struct Character* character)
 {
     if (IsKeyDown(KEY_A))
@@ -196,8 +209,7 @@ int drawMenu(int screenWidth, int screenHeight, struct Choice* choice)
         }
         else if (choice->x == screenWidth / 2 - 125 && choice->y == screenHeight / 2 + 100)
         {
-            // settings();
-            // Do something for "settings"
+            return 2;
         }
         else if (choice->x == screenWidth / 2 - 125 && choice->y == screenHeight / 2 + 200)
         {
@@ -213,14 +225,114 @@ int drawMenu(int screenWidth, int screenHeight, struct Choice* choice)
     return 0; // Return 0 to indicate no menu item was selected
 }
 
+void settings_logic(int screenWidth, int screenHeight, struct Choice *choice, struct Gun *gun, struct Character *character, struct Target *target)
+{
+    int settingsChoice = settings(screenWidth, screenHeight, choice);
+
+    switch (settingsChoice)
+    {
+        case 1:
+        {
+            gun->drHitbox = true;
+            target->drHitbox = true;
+            character->drHitbox = true;
+            
+            break;
+        }
+        case 2:
+        {
+            // Изменение разрешения на 1920x1080
+            screenWidth = 1920;
+            screenHeight = 1080;
+
+            // Изменение размеров окна
+            SetWindowSize(screenWidth, screenHeight);
+
+            // Изменение размеров рендер-цели
+            SetTargetFPS(60); // Установка желаемого FPS
+
+            break;
+        }
+        case 3:
+        {
+            // Изменение разрешения на 1000x1000
+            screenWidth = 1000;
+            screenHeight = 1000;
+
+            // Изменение размеров окна
+            SetWindowSize(screenWidth, screenHeight);
+
+            // Изменение размеров рендер-цели
+            SetTargetFPS(60); // Установка желаемого FPS
+
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+
+int settings(int screenWidth, int screenHeight, struct Choice *choice)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    DrawText("debug mode", screenWidth / 2, screenHeight / 2, 70, WHITE);
+    DrawText("resolution", screenWidth / 2, screenHeight / 2 + 100, 70, WHITE);
+    DrawText("1920x1080", screenWidth / 2, screenHeight / 2 + 200, 50, WHITE);
+    DrawText("1000x1000", screenWidth / 2, screenHeight / 2 + 300, 50, WHITE);
+
+    if (IsKeyPressed(KEY_S) && choice->y < screenHeight / 2 + 300)
+    {
+        choice->y += 100;
+    }
+    else if (IsKeyPressed(KEY_W) && choice->y > screenHeight / 2)
+    {
+        choice->y -= 100;
+    }
+
+    // Wrap the selection around if it goes out of bounds
+    if (choice->y > screenHeight / 2 + 300)
+    {
+        choice->y = screenHeight / 2;
+    }
+    else if (choice->y < screenHeight / 2)
+    {
+        choice->y = screenHeight / 2 + 300;
+    }
+
+    // Draw the selection box around the chosen option
+    choice->x = screenWidth / 2 - 125; // Offset the selection box
+
+    DrawRectangleLines(choice->x, choice->y, 450, 100, WHITE);
+
+        if (IsKeyPressed(KEY_ENTER))
+    {
+        if (choice->x == screenWidth / 2 - 125 && choice->y == screenHeight / 2)
+        {
+            return 1; // Return 1 for "debug mode"
+        }
+        else if (choice->x == screenWidth / 2 - 125 && choice->y == screenHeight / 2 + 200)
+        {
+            return 2; // Return 2 for "fullHD"
+        }
+        else if (choice->x == screenWidth / 2 - 125 && choice->y == screenHeight / 2 + 300)
+        {
+            return 3; // Return 3 for "1000x1000 defolt debug mode"
+        }
+    }
+
+    return 0; // Return 0 to indicate no menu item was selected
+
+    EndDrawing();
+}
 
 void runGameLoop(int screenHeight, int screenWidth)
 {
-
-
-    struct Character character = {100, 100, 32, 5, {character.x, character.y, 45, 45}, false};
-    struct Target target = {200, 200, 90, 100, false, 0, {target.x, target.y, 90, 90}, true};
-    struct Gun gun = {character.x, character.y, 7, 10, {gun.gunX, gun.gunY, 50, 50}};
+    struct Character character = {100, 100, 32, 5, {character.x, character.y, 45, 45}, false, false};
+    struct Target target = {200, 200, 90, 100, false, 0, {target.x, target.y, 90, 90}, true, false};
+    struct Gun gun = {character.x, character.y, 7, 10, {gun.gunX, gun.gunY, 50, 50}, false};
 
     Music backgroundMusic;
     backgroundMusic = LoadMusicStream("../music/mus1.mp3");
@@ -267,6 +379,7 @@ void game()
 
     int menuChoice = 0;
     bool showText = false; // Флаг для отображения надписи "PISKA POPKA"
+    bool showSettings = false;
 
     while (!WindowShouldClose())
     {
@@ -281,6 +394,10 @@ void game()
             if (menuChoice == 1)
             {
                 runGameLoop(screenHeight, screenWidth); // Запустить основной алгоритм игры
+            }
+            else if(menuChoice == 2)
+            {   
+                showSettings = true;
             }
             else if (menuChoice == 3)
             {
@@ -305,16 +422,21 @@ void game()
             }
         }
 
+        while(showSettings)
+        {
+            ClearBackground(BLACK);
+            settings(screenHeight, screenWidth, &choice);
+
+            if (IsKeyPressed(KEY_SPACE))
+            {
+                showSettings = false; // Скрыть надпись "PISKA POPKA"
+            }
+        }
         EndDrawing();
     }
 
     CloseWindow();
 }
-
-
-
-
-
 
 int main()
 {
