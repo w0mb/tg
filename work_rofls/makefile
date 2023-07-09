@@ -1,28 +1,21 @@
-CC := gcc
-CFLAGS := -Wall -Wextra
+CC = cc
+CFLAGS = -I../raylib/src
+LDFLAGS = -L../raylib/src -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
-SRC_DIR := ../src
-OBJ_DIR := ../obj
-BIN_DIR := ../bin
+TARGET = ../bin/a.out
+OBJ_DIR = ../obj
+SRC_DIR = ../src
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
-APP := $(BIN_DIR)/app
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) $(LDFLAGS) -o $(TARGET)
 
-SRCL := $(wildcard $(SRC_DIR)/*.c)
-OBJL := $(patsubst $(SRC_DIR)/%c, $(OBJ_DIR)/%.o, $(SRCL))
-
-all: dir $(APP)
-
-dir: 
-	@mkdir -p $(OBJ_DIR)
-	@mkdir -p $(BIN_DIR)
-	
-$(OBJ_DIR)/%.o: $(SRCL)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(APP): $(OBJL)
-	$(CC) $(CFLAGS) $^ -o $@
+run: $(TARGET)
+	$(TARGET)
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
-
-.PHONY: all clean
+	rm -f $(OBJS) $(TARGET)
