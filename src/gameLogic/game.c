@@ -33,7 +33,6 @@ void runGameLoop(int screenHeight, int screenWidth)
 
             if (debugMode)
             {
-            DrawText("Debug Mode", 10, 30, 20, GREEN);
             DrawText("Press 'H' to toggle hitbox display", 10, 50, 20, GREEN);
             DrawText("Press 'R' to reload gun", 10, 70, 20, GREEN);
             }

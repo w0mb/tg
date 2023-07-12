@@ -7,6 +7,7 @@ const char* texturePaths[] = {
     "../png/gun.png",
     "../png/gun1.png",
     "../png/target.png"
+
 };
 
 void loadTextures()
@@ -35,7 +36,7 @@ void draw_char(struct Character* character)
     drawTexturedRect((Rectangle){character->x, character->y, character->size, character->size},
                     textures[character->flipX ? TEXTURE_CHARACTER_MIRRORED : TEXTURE_CHARACTER], WHITE);
 
-    if (character->drHitbox == true)
+    if (character->drHitbox)
     {
         DrawRectangleLines(character->x, character->y, character->charHitbox.width, character->charHitbox.height, GREEN);
     }
@@ -48,7 +49,7 @@ void draw_target(struct Target* target)
         drawTexturedRect((Rectangle){target->x, target->y, target->size, target->size},
                         textures[TEXTURE_TARGET], WHITE);
 
-        if (target->drHitbox == true)
+        if (target->drHitbox)
         {
             DrawRectangleLines(target->x, target->y, target->targetHitbox.width, target->targetHitbox.height, RED);
         }
@@ -63,7 +64,7 @@ void draw_gun(struct Character* character, struct Target* target, struct Gun* gu
     drawTexturedRect((Rectangle){gun->gunX, gun->gunY, textures[TEXTURE_GUN].width, textures[TEXTURE_GUN].height},
                     textures[character->flipX ? TEXTURE_GUN_MIRRORED : TEXTURE_GUN], WHITE);
 
-    if (gun->drHitbox == true)
+    if (gun->drHitbox)
     {
         DrawRectangleLines(gun->gunX, gun->gunY, gun->gunHitbox.width, gun->gunHitbox.height, BLUE);
     }
@@ -71,26 +72,28 @@ void draw_gun(struct Character* character, struct Target* target, struct Gun* gu
 
 void move(struct Character* character)
 {
+    int speed = character->speed;
+
     if (IsKeyDown(KEY_A))
     {
-        character->x -= character->speed;
+        character->x -= speed;
         character->flipX = true;
     }
 
     if (IsKeyDown(KEY_D))
     {
-        character->x += character->speed;
+        character->x += speed;
         character->flipX = false;
     }
 
     if (IsKeyDown(KEY_W))
     {
-        character->y -= character->speed;
+        character->y -= speed;
     }
 
     if (IsKeyDown(KEY_S))
     {
-        character->y += character->speed;
+        character->y += speed;
     }
 }
 
@@ -102,9 +105,10 @@ void shoot(struct Gun* gun, struct Target* target)
 
         for (int i = 0; i < 50; i++)
         {
-            DrawCircle(gun->gunX + i, gun->gunY, 4, ORANGE);
+            Vector2 bulletPosition = {gun->gunX + i, gun->gunY};
+            DrawCircle(bulletPosition.x, bulletPosition.y, 4, ORANGE);
 
-            if (CheckCollisionPointRec((Vector2){gun->gunX + i, gun->gunY}, target->targetHitbox))
+            if (CheckCollisionPointRec(bulletPosition, target->targetHitbox))
             {
                 target->hp -= gun->damage;
 
